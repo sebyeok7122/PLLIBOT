@@ -337,7 +337,7 @@ client.on('messageCreate', async (msg) => {
     if (!bumper) return;
 
     const guild = msg.guild;
-    const userId = bumper.id;
+    const userId = msg.interaction?.user?.id || msg.author.id;  // DISBOARD & Dicoall 대응
 
     const promo = loadPromo();
     const today = new Date().toISOString().slice(0, 10);
