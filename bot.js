@@ -316,10 +316,9 @@ client.on('messageCreate', async (msg) => {
 
     const text = `${msg.content || ''} ${msg.embeds?.map(e => `${e.title ?? ''} ${e.description ?? ''}`).join(' ') ?? ''}`.toLowerCase();
     const isBump =
-      text.includes('bump') ||
-      text.includes('서버 추천') ||
-      text.includes('리스트 상단') ||
-      text.includes('상단에 노출');
+    text.includes('bump를 사용함') ||        // 맨 위 문구
+    text.includes('서버 갱신 완료') ||        // 본문 문구
+    text.includes('DISBOARD에서 확인해 줘');  // 보조 안전 체크
     if (!isBump) return;
 
     const processed = loadProcessed();
