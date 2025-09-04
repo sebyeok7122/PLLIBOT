@@ -307,7 +307,60 @@ client.on('messageCreate', async message => {
 }); // 🔹 messageCreate 블록 끝
 
 // ====== DISBOARD /bump 성공 감지 → 포인트 지급
-client.on('messageCreate', async (msg) => { ... });
+client.on('messageCreate', async (msg) => {
+  try {
+    if (msg.author?.id !== DISBOARD_BOT_ID) return;
+
+    const text = `${msg.content || ''} ${msg.embeds?.map(e => `${e.title ?? ''} ${e.description ?? ''}`).join(' ') ?? ''}`.toLowerCase();
+    const isBump =
+      text.includes('bump') ||
+      text.includes('서버 추천') ||
+      text.includes('리스트 상단') ||
+      text.includes('상단에 노출');
+    if (!isBump) return;
+
+    const processed = loadProcessed();
+    if (processed[msg.id]) return;
+
+    const bumper = [...msg.mentions.users.values()][0];
+    if (!bumper) return;
+
+    const guild = msg.guild;
+    const userId = bumper.id;
+
+    const promo = loadPromo();
+    const today = new Date().toISOString().slice(0, 10);
+    promo.daily[today] = promo.daily[today] ?? 0;
+
+    if (promo.daily[today] >= PROMO_LIMIT_PER_DAY) {
+      await msg.channel.send(`📛 오늘 홍보 포인트 한도(${PROMO_LIMIT_PER_DAY}회)에 도달했어요. 내일 다시 시도해 주세요!`);
+      return;
+    }
+
+    const now = Date.now();
+    const lastAt = promo.lastBumpAt[userId] ?? 0;
+    if (BUMP_COOLDOWN_MS > 0 && now - lastAt < BUMP_COOLDOWN_MS) {
+      const remainMin = Math.ceil((BUMP_COOLDOWN_MS - (now - lastAt)) / (60 * 1000));
+      await msg.channel.send(`⏳ <@${userId}> 님은 아직 쿨다운 중이에요. 약 **${remainMin}분** 후 다시 가능!`);
+      return;
+    }
+
+    // ✅ 지급 & 기록
+    await awardPromoPoints(guild, userId, PROMO_POINTS, 'DISBOARD bump');
+    promo.daily[today] += 1;
+    promo.lastBumpAt[userId] = now;
+    savePromo(promo);
+
+    processed[msg.id] = true;
+    saveProcessed(processed);
+
+    // ✅ 사용자 피드백
+    await msg.channel.send(`🎉 <@${userId}> 님, 서버 홍보 고맙습니다 💌 **+${PROMO_POINTS}점** 지급 ❤ (오늘 ${promo.daily[today]}/${PROMO_LIMIT_PER_DAY})`);
+
+  } catch (e) {
+    console.error('DISBOARD bump 감지 처리 중 오류:', e);
+  }
+});
 
 // (이하 VC 참여, 온보딩, interactionCreate, Webhook, 서버 실행 부분은 네 코드 그대로 유지)
 
