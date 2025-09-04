@@ -312,13 +312,22 @@ client.on('messageCreate', async message => {
 // ====== DISBOARD /bump 성공 감지 → 포인트 지급
 client.on('messageCreate', async (msg) => {
   try {
-    if (msg.author?.id !== DISBOARD_BOT_ID) return;
+    const DISBOARD_BOT_ID = "302050872383242240";
+    const DICOALL_BOT_ID  = "664647740877176832";
+
+    // 두 홍보봇만 감지
+    if (![DISBOARD_BOT_ID, DICOALL_BOT_ID].includes(msg.author?.id)) return;
 
     const text = `${msg.content || ''} ${msg.embeds?.map(e => `${e.title ?? ''} ${e.description ?? ''}`).join(' ') ?? ''}`.toLowerCase();
+
     const isBump =
-    text.includes('bump를 사용함') ||        // 맨 위 문구
-    text.includes('서버 갱신 완료') ||        // 본문 문구
-    text.includes('DISBOARD에서 확인해 줘');  // 보조 안전 체크
+      text.includes('bump를 사용함') ||                 // DISBOARD
+      text.includes('서버 갱신 완료') ||                 // DISBOARD
+      text.includes('DISBOARD에서 확인해 줘') ||          // DISBOARD
+      text.includes('up을 사용함') ||                    // Dicoall
+      text.includes('서버 추천/부스트 하기') ||          // Dicoall
+      text.includes('서버가 상단에 표시되었습니다');      // Dicoall
+
     if (!isBump) return;
 
     const processed = loadProcessed();
