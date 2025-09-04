@@ -112,7 +112,10 @@ client.on('messageCreate', async message => {
   const userId = message.author.id;
   const displayName = message.member?.nickname || message.author.username;
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  // 한국 시간(UTC+9) 기준으로 오늘 날짜 계산
+  const today = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
 
   const attendance = loadJSON(attendancePath);
   const vcData = loadJSON(vcDataPath);
